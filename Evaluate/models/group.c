@@ -33,3 +33,10 @@ char* group_get_answer_filepath(Group* group, char* path_ans){
 		group->data_path, group->program_name, group->ans_id);
 	return path_ans;
 }
+
+//get error file path
+char* group_get_error_filepath(Group* group, char* path_ans){
+	sprintf(path_ans, "%s%s_%05d.err", 
+		group->data_path, group->program_name, group->ans_id);
+	return path_ans;
+}

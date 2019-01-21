@@ -55,12 +55,26 @@
     └─helloworld
 ```
 
+支持语言：
+
+> 当前支持c/cpp(可执行程序均可)/python/python3/java，
+>
+> 需要预装gcc, java, python2, python3（安装python3后建立链接到/usr/bin/python3）
+
 如何使用:
+
 ```
-./evaluate limit_time limit_memory len_of_ans data_path program_path program_name
-eg.
-./evaluate 1 256 2 /home/jeffxie/Documents/test/helloworld/ /home/jeffxie/Documents/test/test_program test_program
+./evaluate limit_time limit_memory len_of_ans data_path program_path program_name type
+eg1.
+./evaluate 1 256 2 /home/jeffxie/Documents/test/helloworld/ /home/jeffxie/Documents/test/test_program test_program cpp
+eg2.
+./evaluate 1 256 2 /home/jeffxie/Documents/test/helloworld/ /home/jeffxie/Documents/test/test_program.py test_program.py python
 ```
+
+五种type：
+
+> c/cpp/python/python3/java
+
 
 
 input文件名：
@@ -89,6 +103,8 @@ test_program_00001.ans
 
 socket服务器使用该评测机安全性建议：
 
+> 先进行安全性限制，部分函数库不得使用，检测到就拒绝代码
+>
 > 置于容器中
 >
 > in/ans文件写入后，文件权限设置为400，防止未知写入。
