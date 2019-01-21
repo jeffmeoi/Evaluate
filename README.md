@@ -2,6 +2,7 @@
 
 目录
 ```
+
 │  .gitattributes
 │  README.md
 │
@@ -44,6 +45,14 @@
             test_program_00002.ans
             test_program_00002.in
             test_program_00002.out
+=======
+├─Evaluate
+│  ├─evaluate（总评测机）
+│  ├─models（模型）
+│  ├─run（组例评测机）
+│  └─utils（工具）
+└─test
+    └─helloworld
 ```
 
 如何使用:
@@ -53,21 +62,25 @@ eg.
 ./evaluate 1 256 2 /home/jeffxie/Documents/test/helloworld/ /home/jeffxie/Documents/test/test_program test_program
 ```
 
+
 input文件名：
+
 ```
 program_name_%05d.in
 eg.
 test_program_00001.in
 ```
 
-答ans文件名：
+ans文件名：
 ```
 program_name_%05d.ans
 eg.
 test_program_00001.ans
 ```
 
+
 原理：
+
 > run实现对每个in输出的ans和out对拍，evaluate通过调用run实现整个problem的评测。
 
 接下来做什么：
@@ -87,3 +100,6 @@ socket服务器使用该评测机安全性建议：
 > 加密出两个文件夹名，将in/ans的数据文件和程序分别放在其中，防止程序对数据文件的改动。
 >
 > 加密程序名
+>
+> 接下来可以用其他编程语言实现一个socket服务器，该服务器实现接收problem的信息，程序的编译，写入in和ans文件并设置文件权限，调用该评测机对拍output和answer，删除评测数据，再返回结果，以及最重要的多评测机的调度。
+>
