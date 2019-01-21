@@ -44,10 +44,14 @@ int ans_cmp(){
 
 	char temp_str[1001];
 
+	//get running time and memory used
+	run.process.memory_kb = run.process.rusage.ru_maxrss;
+
 	//get delta time(us)
 	gettimeofday(&run.tv_end, NULL);
 	run.process.time_us = 1000000 * ( run.tv_end.tv_sec - run.tv_begin.tv_sec )
 	 + run.tv_end.tv_usec - run.tv_begin.tv_usec;
+
 
 	//get output and answer from file
 	filepath_get_file_content(group_get_output_filepath(
@@ -65,17 +69,15 @@ int ans_cmp(){
  	str_rmspace(str_cpy(output_without_space, run.output));
  	str_rmspace(str_cpy(ans_without_space, run.ans));
 
-
- 	if(run.process.time_us < 0 || run.process.memory_kb < 0){
+ 	if(run.process.time_us <= 0 || run.process.memory_kb <= 0){
  		return SE;
  	}else if(run.process.time_us > run.group.limit_time_s*1000000){
 		return TLE;
 	}else if(run.process.memory_kb > run.group.limit_memory_mb * 1024){
 		return MLE;
-	}else if(!WIFEXITED(run.process.status) || strlen(run.err) != 0){
+	}else if(strlen(run.err) != 0){
 		return RE;
-	}else if(filepath_file_length(group_get_output_filepath(
-		&run.group, temp_str)) > run.output_maxlen){
+	}else if(filepath_file_length(group_get_output_filepath(&run.group, temp_str)) > run.output_maxlen){
 		return OLE;	//if the length of output out of max len, OLE
  	}else if(0 == str_cmp(run.output, run.ans)){
 		return AC;
@@ -109,17 +111,17 @@ void run_init(Run* run, int ans_id, int limit_time_s, int limit_memory_mb,
 
 }
 
-void exec_program_by_type(char* type, char* program_path){
+int exec_program_by_type(char* type, char* program_path){
 
 	char temp_str[1001];
 	if(0 == str_cmp(type, "c") || 0 == str_cmp(type, "cpp"))
-		execl(program_path, filepath_get_program_name(program_path, temp_str), NULL);
+		return execl(program_path, filepath_get_program_name(program_path, temp_str), NULL);
 	else if(0 == str_cmp(type, "python3"))
-		execl("/usr/bin/python3", "python3", program_path, NULL);
+		return execl("/usr/bin/python3", "python3", program_path, NULL);
 	else if(0 == str_cmp(type, "python"))
-		execl("/usr/bin/python", "python", program_path, NULL);
+		return execl("/usr/bin/python", "python", program_path, NULL);
 	else if(0 == str_cmp(type, "java"))
-		execl("/usr/bin/java", "java", program_path, NULL);
+		return execl("/usr/bin/java", "java", program_path, NULL);
 }
 
 void limit(){
@@ -130,13 +132,20 @@ void limit(){
 	setrlimit(RLIMIT_CPU, &r);
 
 	r.rlim_cur = run.group.limit_memory_mb * 1024 * 1024;
-	r.rlim_max = run.group.limit_memory_mb * 1024 * 1024;
+	r.rlim_max = (run.group.limit_memory_mb + 4) * 1024 * 1024;
 	setrlimit(RLIMIT_AS, &r);
 	setrlimit(RLIMIT_RSS, &r);
 
 	r.rlim_cur = 0, r.rlim_max = 0;
 	setrlimit(RLIMIT_NPROC, &r);
 
+}
+
+void write_result(int result, int time, int memory){
+
+	FILE* fp = fopen(run.run_out, "w");
+	fprintf(fp, "%d %dus %dkb", result, time, memory);
+	fclose(fp);
 }
 
 int main(int argc, char* argv[]){
@@ -188,25 +197,20 @@ int main(int argc, char* argv[]){
 
 		//start test program
 		exec_program_by_type(argv[6], run.group.program_path);
-	
 	}else{			//father process
 
 		//wait4 for rusage to get running information
-		wait4(sub_pid, &run.process.status, 0, &run.process.rusage);
-		//get running time and memory used
-		run.process.memory_kb = run.process.rusage.ru_maxrss;
+		if(-1 != wait4(sub_pid, &run.process.status, 0, &run.process.rusage)){
+			run.result = ans_cmp();
+		}else{
+			run.result = SE;
+		}
 		//close file to avoid something wrong.
 		close(fd_in);
 		close(fd_out);
 		close(fd_err);
-
-		//compare answer and output to get result.
-		run.result = ans_cmp();
-
-		//output result
-		FILE* fp = fopen(run.run_out, "w");
-		fprintf(fp, "%d %dus %dkb", run.result, run.process.time_us, run.process.memory_kb);
-		fclose(fp);
 		
+		//compare answer and output to get result and output result
+		write_result(run.result, run.process.time_us, run.process.memory_kb);
 	}
 }

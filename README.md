@@ -64,11 +64,11 @@
 如何使用:
 
 ```
-./evaluate limit_time limit_memory len_of_ans data_path program_path program_name type
+./evaluate limit_time limit_memory len_of_ans data_path program_path type
 eg1.
-./evaluate 1 256 2 /home/jeffxie/Documents/test/helloworld/ /home/jeffxie/Documents/test/test_program test_program cpp
+./evaluate 1 256 2 /home/jeffxie/Documents/test/helloworld/ /home/jeffxie/Documents/test/test_program cpp
 eg2.
-./evaluate 1 256 2 /home/jeffxie/Documents/test/helloworld/ /home/jeffxie/Documents/test/test_program.py test_program.py python
+./evaluate 1 256 2 /home/jeffxie/Documents/test/helloworld/ /home/jeffxie/Documents/test/test_program.py python
 ```
 
 五种type：
@@ -83,6 +83,7 @@ input文件名：
 program_name_%05d.in
 eg.
 test_program_00001.in
+test_program.py_00001.in
 ```
 
 ans文件名：
@@ -90,6 +91,7 @@ ans文件名：
 program_name_%05d.ans
 eg.
 test_program_00001.ans
+test_program.py_00001.ans
 ```
 
 
