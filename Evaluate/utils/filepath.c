@@ -25,10 +25,33 @@ char* filepath_back(char* path){
 	return path;
 }
 
+//get the program name from path
+char* filepath_get_program_name(char* path, char* name){
+	int len = strlen(path);
+	int cur = 0;
+	for(int i = len-1; i >= 0; i--){
+		if(path[i] == '/'){
+			cur = i+1;
+			break;
+		}
+	}
+	int index = 0;
+	for(int i = cur; i < len; i++){
+		name[index++] = path[i];
+	}
+	name[index] = '\0';
+	return name;
+}
+
 //read file content
 char* filepath_get_file_content(char* filename, char* content, 
 	int maxlen){
-	
+
+	if(access(filename, F_OK)){
+		content[0] = '\0';
+		return content;
+	}
+
 	FILE* fp = fopen(filename, "r");
 	int i, c;
 	for(i = 0; i < maxlen && (c = fgetc(fp)) != EOF; i++)
@@ -41,6 +64,8 @@ char* filepath_get_file_content(char* filename, char* content,
 
 //get the length of file
 int filepath_file_length(char* filename){
+	if(access(filename, F_OK))
+		return 0;
 	FILE* fp = fopen(filename, "r");
 	fseek(fp, 0, SEEK_END);
     int len = ftell(fp);

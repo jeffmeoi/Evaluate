@@ -18,8 +18,7 @@ typedef struct Group
 
 //group init
 void group_init(Group* group, int ans_id, int limit_time_s, 
-	int limit_memory_mb, char* data_path, char* program_path, 
-	char* program_name);
+	int limit_memory_mb, char* data_path, char* program_path);
 
 //get input file path
 char* group_get_input_filepath(Group* group, char* path_in);

@@ -17,4 +17,7 @@ char* filepath_get_file_content(char* filename, char* content, int maxlen);
 //get the length of file
 int filepath_file_length(char* filename);
 
+//get the program name from path
+char* filepath_get_program_name(char* path, char* name);
+
 #endif

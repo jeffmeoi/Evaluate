@@ -3,14 +3,13 @@
 
 //group init
 void group_init(Group* group, int ans_id, int limit_time_s, 
-	int limit_memory_mb, char* data_path, char* program_path, 
-	char* program_name){
+	int limit_memory_mb, char* data_path, char* program_path){
 	group->ans_id = ans_id;
 	group->limit_time_s = limit_time_s;
 	group->limit_memory_mb = limit_memory_mb;
 	strcpy(group->data_path, data_path);
 	strcpy(group->program_path, program_path);
-	strcpy(group->program_name, program_name);
+	filepath_get_program_name(program_path, group->program_name);
 }
 
 //get input file path

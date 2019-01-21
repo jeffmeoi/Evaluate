@@ -29,7 +29,6 @@ typedef struct Evaluate{
 	char run_out[1001];
 	char run_exe[1001];
 	char run_err[1001];
-	char path_err[1001];
 
 
 } Evaluate;
@@ -40,7 +39,9 @@ Evaluate evaluate;
 
 void evaluate_init(Evaluate* evaluate, int limit_time_s, 
 	int limit_memory_mb, int len_ans, char* data_path, 
-	char* program_path, char* program_name){
+	char* program_path){
+
+	char temp_str[1001];
 
 	evaluate->result = 0;
 	evaluate->maxlen = 100000;
@@ -53,7 +54,14 @@ void evaluate_init(Evaluate* evaluate, int limit_time_s,
 
 	submission_init(&evaluate->submission, limit_time_s, 
 		limit_memory_mb, len_ans, data_path, program_path, 
-		program_name);
+		filepath_get_program_name(program_path, temp_str));
+
+	sprintf(evaluate->run_exe, "%srun/run", evaluate->project_path);
+	sprintf(evaluate->run_out, "%srun/run.out", evaluate->project_path);
+	sprintf(evaluate->run_err, "%sevaluate/evaluate.err", evaluate->project_path);
+
+	fclose(fopen(evaluate->run_out, "w"));
+	fclose(fopen(evaluate->run_err, "w"));
 
 }
 
@@ -69,14 +77,12 @@ int main(int argc, char* argv[]){
 		atoi(argv[2])/*limit memory*/, 
 		atoi(argv[3])/*len of ans*/, 
 		argv[4]/*data path*/, 
-		argv[5]/*program path*/,
-		argv[6]/*program name*/);
+		argv[5]/*program path*/);
 
-	sprintf(evaluate.run_exe, "%srun/run", evaluate.project_path);
-	sprintf(evaluate.run_out, "%srun/run.out", evaluate.project_path);
-	sprintf(evaluate.run_err, "%srun/run.err", evaluate.project_path);
-	sprintf(evaluate.path_err, "%sevaluate/evaluate.err", evaluate.project_path);
-
+	if(access(argv[5], F_OK)){
+		printf("SE  0us 0kb 0");
+		return 0;
+	}
 
 	int ans_index;
 	for(ans_index = 1; ans_index <= evaluate.submission.len_ans; ans_index++){
@@ -94,8 +100,7 @@ int main(int argc, char* argv[]){
 				argv[2]/*str limit memory*/, 
 				evaluate.submission.data_path, 
 				evaluate.submission.program_path, 
-				evaluate.submission.program_name, 
-				argv[7]/*type*/,
+				argv[6],
 				NULL);
 		}else{
 
@@ -129,7 +134,7 @@ int main(int argc, char* argv[]){
 
 	if(evaluate.result == RE && 0 == access(evaluate.run_err, F_OK)){
 		filepath_get_file_content(evaluate.run_err, temp_str, evaluate.maxlen);
-		FILE* fp = fopen(evaluate.path_err, "w");
+		FILE* fp = fopen(evaluate.run_err, "w");
 		fprintf(fp, "%s", temp_str);
 		fclose(fp);
 	}
