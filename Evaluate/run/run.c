@@ -23,11 +23,11 @@ typedef struct Run{
 	Group group;
 	Process process;
 
-	char run_out[1001], run_err[1001];
-	char ans[100001], output[100001], err[100001];	//output limit length 100000
+	char run_out[1001];
+	char ans[100001], output[100001];	//output limit length 100000
 	int result, output_maxlen;
 	char ps_cmd[1001];
-	char data_path[1001], program_path[1001];
+	char data_path[101], program_path[101];
 	//struct timeval tv_begin, tv_end;		//get system time
 	clock_t begin, end;
 
@@ -37,6 +37,7 @@ typedef struct Run{
 
 
 Run run;
+
 
 
 int ans_cmp(){
@@ -68,9 +69,7 @@ int ans_cmp(){
 		&run.group, temp_str), run.output, run.output_maxlen);
 	filepath_get_file_content(group_get_answer_filepath(
 		&run.group, temp_str), run.ans, run.output_maxlen);
-	filepath_get_file_content(group_get_answer_filepath(
-		&run.group, temp_str), run.err, run.output_maxlen);
-
+	
 	//'\r\n' in windows and '\n' in linux. remove space in the end.
 	str_rstrip(str_replace(run.output, "\r", ""));
 	str_rstrip(str_replace(run.ans, "\r", ""));
@@ -79,9 +78,8 @@ int ans_cmp(){
 	char output_without_space[100001], ans_without_space[100001];
  	str_rmspace(str_cpy(output_without_space, run.output));
  	str_rmspace(str_cpy(ans_without_space, run.ans));
- 	if(strlen(run.err) != 0){
- 		return RE;
- 	}else if(0 == str_cmp(run.output, run.ans)){
+
+ 	if(0 == str_cmp(run.output, run.ans)){
 		return AC;
 	}else if(0 == str_cmp(output_without_space, ans_without_space)){
 		return PE;
@@ -104,23 +102,8 @@ void run_init(Run* run, int ans_id, int limit_time_s, int limit_memory_mb,
 		data_path, program_path, program_name);
 	sprintf(run->run_out, "%srun.out", 
 		filepath_get_absolute_path(temp_str));
-	sprintf(run->run_err, "%srun.err", 
-		filepath_get_absolute_path(temp_str));
-
 	sprintf(run->ps_cmd, "ps aux | grep %s", program_path);
 
-}
-
-void exec_program_by_type(char* type, char* program_path, char* program_name){
-
-	if(0 == str_cmp(type, "c") || 0 == str_cmp(type, "cpp"))
-		execl(program_path, program_name, NULL);
-	else if(0 == str_cmp(type, "python3"))
-		execl("/usr/bin/python3", "python3", program_path, NULL);
-	else if(0 == str_cmp(type, "python"))
-		execl("/usr/bin/python", "python", program_path, NULL);
-	else if(0 == str_cmp(type, "java"))
-		execl("/usr/bin/java", "java", program_path, NULL);
 }
 
 int main(int argc, char* argv[]){
@@ -150,8 +133,6 @@ int main(int argc, char* argv[]){
 		O_RDONLY | O_CREAT, 0777);	//fd of input file
 	int fd_out = open(group_get_output_filepath(&run.group, temp_str), 
 		O_WRONLY | O_CREAT, 0777);	//fd of output file
-	int fd_err = open(run.run_err, O_WRONLY | O_CREAT, 0777);	//fd of output file
-
 	//gettimeofday(&run.tv_begin, NULL);		//begin time
 
 	//clock is similar with CPU time, gettimeofday get system time
@@ -162,16 +143,13 @@ int main(int argc, char* argv[]){
 		//close original input and output file
 		close(STDIN_FILENO);
 		close(STDOUT_FILENO);
-		close(STDERR_FILENO);
+		
 		//redirect input and output file
 		dup2(fd_in, STDIN_FILENO);
 		dup2(fd_out, STDOUT_FILENO);
-		dup2(fd_err, STDERR_FILENO);
 
 		//start test program
-		exec_program_by_type(argv[7], run.group.program_path, 
-			run.group.program_name);
-		//execl(run.group.program_path, run.group.program_name, NULL);
+		execl(run.group.program_path, run.group.program_name, NULL);
 	
 	}else{			//father process
 		pid_t sub_kill_pid = fork();	//new another subprocess to minitor test program.
@@ -218,7 +196,6 @@ int main(int argc, char* argv[]){
 			//close file to avoid something wrong.
 			close(fd_in);
 			close(fd_out);
-			close(fd_err);
 
 			//compare answer and output to get result.
 			run.result = ans_cmp();

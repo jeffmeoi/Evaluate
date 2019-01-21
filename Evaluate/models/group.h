@@ -30,7 +30,4 @@ char* group_get_output_filepath(Group* group, char* path_out);
 //get answer file path
 char* group_get_answer_filepath(Group* group, char* path_ans);
 
-//get error file path
-char* group_get_error_filepath(Group* group, char* path_ans);
-
 #endif
