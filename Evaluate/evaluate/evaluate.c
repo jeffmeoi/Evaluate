@@ -16,18 +16,21 @@
 #include "../models/submission.h"
 #include "../models/process.h"
 
-
 typedef struct Evaluate{
 	
 	Submission submission;
 	Process process;
 	int result;
+	int maxlen;
 	int total_memory_mb, total_time_us;
 	int average_memory_mb, average_time_us;
 	char out[1001];
 	char project_path[1001];
-	char path_out[1001];
-	char path_run[1001];
+	char run_out[1001];
+	char run_exe[1001];
+	char run_err[1001];
+	char path_err[1001];
+
 
 } Evaluate;
 
@@ -39,9 +42,12 @@ void evaluate_init(Evaluate* evaluate, int limit_time_s,
 	int limit_memory_mb, int len_ans, char* data_path, 
 	char* program_path, char* program_name){
 
-	int result = 0;
-	int total_memory_mb = 0, total_time_us = 0;
-	int average_memory_mb = 0, average_time_us = 0;
+	evaluate->result = 0;
+	evaluate->maxlen = 100000;
+	evaluate->total_memory_mb = 0;
+	evaluate->total_time_us = 0;
+	evaluate->average_memory_mb = 0;
+	evaluate->average_time_us = 0;
 
 	filepath_back(filepath_get_absolute_path(evaluate->project_path));
 
@@ -54,7 +60,7 @@ void evaluate_init(Evaluate* evaluate, int limit_time_s,
 
 int main(int argc, char* argv[]){
 
-	int i = 0;
+	char temp_str[100001];
 
 	char str_ans_id[10];
 
@@ -66,8 +72,11 @@ int main(int argc, char* argv[]){
 		argv[5]/*program path*/,
 		argv[6]/*program name*/);
 
-	sprintf(evaluate.path_run, "%srun/run", evaluate.project_path);
-	sprintf(evaluate.path_out, "%srun/run.out", evaluate.project_path);
+	sprintf(evaluate.run_exe, "%srun/run", evaluate.project_path);
+	sprintf(evaluate.run_out, "%srun/run.out", evaluate.project_path);
+	sprintf(evaluate.run_err, "%srun/run.err", evaluate.project_path);
+	sprintf(evaluate.path_err, "%sevaluate/evaluate.err", evaluate.project_path);
+
 
 	int ans_index;
 	for(ans_index = 1; ans_index <= evaluate.submission.len_ans; ans_index++){
@@ -78,20 +87,23 @@ int main(int argc, char* argv[]){
 		pid_t pid = fork();				
 		if(0 == pid){
 			//run the program "run"
-			execl(evaluate.path_run, "run", 
+			execl(evaluate.run_exe, 
+				"run", 
 				str_ans_id, 
 				argv[1]/*str limit time*/, 
 				argv[2]/*str limit memory*/, 
 				evaluate.submission.data_path, 
 				evaluate.submission.program_path, 
 				evaluate.submission.program_name, 
+				argv[7]/*type*/,
 				NULL);
 		}else{
+
 			int status;
 			waitpid(pid, &status, 0);	//wait subprocess exit.
 
 			//get result from file
-			FILE* fp = fopen(evaluate.path_out, "r");
+			FILE* fp = fopen(evaluate.run_out, "r");
 			int memory_mb, time_us;
 			fscanf(fp, "%d %dus %dkb", &evaluate.result, &time_us, &memory_mb);
 			fclose(fp);
@@ -101,20 +113,32 @@ int main(int argc, char* argv[]){
 			evaluate.total_time_us += time_us;
 			evaluate.total_memory_mb += memory_mb;
 
-			//calculate average time and average memory
-			evaluate.average_time_us = evaluate.total_time_us / ans_index;
-			evaluate.average_memory_mb = evaluate.total_memory_mb / ans_index;
 
 			//if subprocess exit is unnormal
 			if(!WIFEXITED(status))
 				evaluate.result = SE;
 
 			//if result is not AC
-			if(evaluate.result != AC)
+			if(evaluate.result != AC){
 				break;
+			}
 		}
 	}
+	if(evaluate.result == AC)
+		ans_index--;
+
+	if(evaluate.result == RE && 0 == access(evaluate.run_err, F_OK)){
+		filepath_get_file_content(evaluate.run_err, temp_str, evaluate.maxlen);
+		FILE* fp = fopen(evaluate.path_err, "w");
+		fprintf(fp, "%s", temp_str);
+		fclose(fp);
+	}
+	//calculate average time and average memory
+	evaluate.average_time_us = evaluate.total_time_us / ans_index;
+	evaluate.average_memory_mb = evaluate.total_memory_mb / ans_index;
+
+
 	//printf result
 	printf("%s %dus %dkb %d", str_result[evaluate.result], evaluate.average_time_us, 
-		evaluate.average_memory_mb, --ans_index);	
+		evaluate.average_memory_mb, ans_index);	
 }
