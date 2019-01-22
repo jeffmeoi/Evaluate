@@ -44,7 +44,7 @@ void evaluate_init(Evaluate* evaluate, int limit_time_s,
 	char temp_str[1001];
 
 	evaluate->result = 0;
-	evaluate->maxlen = 100000;
+	evaluate->maxlen = 1000000;
 	evaluate->total_memory_mb = 0;
 	evaluate->total_time_us = 0;
 	evaluate->average_memory_mb = 0;
@@ -134,16 +134,13 @@ int main(int argc, char* argv[]){
 
 	if(evaluate.result == RE && 0 == access(evaluate.run_err, F_OK)){
 		filepath_get_file_content(evaluate.run_err, temp_str, evaluate.maxlen);
-		FILE* fp = fopen(evaluate.run_err, "w");
-		fprintf(fp, "%s", temp_str);
-		fclose(fp);
+		fprintf(stderr, "%s", temp_str);
 	}
 	//calculate average time and average memory
 	evaluate.average_time_us = evaluate.total_time_us / ans_index;
 	evaluate.average_memory_mb = evaluate.total_memory_mb / ans_index;
 
-
 	//printf result
-	printf("%s %dus %dkb %d", str_result[evaluate.result], evaluate.average_time_us, 
+	fprintf(stdout, "%s %dus %dkb %d", str_result[evaluate.result], evaluate.average_time_us, 
 		evaluate.average_memory_mb, ans_index);	
 }

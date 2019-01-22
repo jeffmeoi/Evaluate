@@ -25,7 +25,7 @@ typedef struct Run{
 	Process process;
 
 	char run_out[1001], run_err[1001];
-	char ans[100001], output[100001], err[100001];	//output limit length 100000
+	char ans[1000001], output[1000001], err[1000001];	//output limit length 100000
 	int result, output_maxlen;
 	char ps_cmd[1001];
 	char data_path[1001], program_path[1001];
@@ -95,7 +95,7 @@ void run_init(Run* run, int ans_id, int limit_time_s, int limit_memory_mb,
 	char* data_path, char* program_path){
 
 	char temp_str[1001];
-	run->output_maxlen = 100001;
+	run->output_maxlen = 1000000;
 	str_cpy(run->data_path, data_path);
 	str_cpy(run->program_path, program_path);
 	group_init(&run->group, ans_id, limit_time_s, limit_memory_mb, 

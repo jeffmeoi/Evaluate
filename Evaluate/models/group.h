@@ -10,8 +10,8 @@ typedef struct Group
 	int running_time_us, running_memory_kb;
 	int limit_time_s, limit_memory_mb;
 	int ans_id;
-	char program_name[101];
-	char data_path[101], program_path[101];
+	char program_name[1001];
+	char data_path[1001], program_path[1001];
 } Group;
 
 

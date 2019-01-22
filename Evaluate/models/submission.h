@@ -9,8 +9,8 @@ typedef struct Submission
 {
 	int len_ans;
 	int limit_time_s, limit_memory_mb;
-	char program_path[101], data_path[101];
-	char program_name[101];
+	char program_path[1001], data_path[1001];
+	char program_name[1001];
 } Submission;
 
 //init submission
