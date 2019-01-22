@@ -58,10 +58,10 @@ void evaluate_init(Evaluate* evaluate, int limit_time_s,
 
 	sprintf(evaluate->run_exe, "%srun/run", evaluate->project_path);
 	sprintf(evaluate->run_out, "%srun/run.out", evaluate->project_path);
-	sprintf(evaluate->run_err, "%sevaluate/evaluate.err", evaluate->project_path);
+	sprintf(evaluate->run_err, "%srun/run.err", evaluate->project_path);
 
 	fclose(fopen(evaluate->run_out, "w"));
-	fclose(fopen(evaluate->run_err, "w"));
+
 
 }
 
@@ -141,6 +141,6 @@ int main(int argc, char* argv[]){
 	evaluate.average_memory_mb = evaluate.total_memory_mb / ans_index;
 
 	//printf result
-	fprintf(stdout, "%s %dus %dkb %d", str_result[evaluate.result], evaluate.average_time_us, 
+	fprintf(stdout, "%d %dus %dkb %d", evaluate.result, evaluate.average_time_us, 
 		evaluate.average_memory_mb, ans_index);	
 }

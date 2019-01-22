@@ -102,7 +102,7 @@ void run_init(Run* run, int ans_id, int limit_time_s, int limit_memory_mb,
 		data_path, program_path);
 	sprintf(run->run_out, "%srun.out", 
 		filepath_get_absolute_path(temp_str));
-	sprintf(run->run_err, "%sevaluate/evaluate.err", 
+	sprintf(run->run_err, "%srun/run.err", 
 		filepath_back(filepath_get_absolute_path(temp_str)));
 	fclose(fopen(run->run_out, "w"));
 	fclose(fopen(run->run_err, "w"));
@@ -118,7 +118,7 @@ int exec_program_by_type(char* type, char* program_path){
 		return execl(program_path, filepath_get_program_name(program_path, temp_str), NULL);
 	else if(0 == str_cmp(type, "python3"))
 		return execl("/usr/bin/python3", "python3", program_path, NULL);
-	else if(0 == str_cmp(type, "python"))
+	else if(0 == str_cmp(type, "python2"))
 		return execl("/usr/bin/python", "python", program_path, NULL);
 	else if(0 == str_cmp(type, "java"))
 		return execl("/usr/bin/java", "java", program_path, NULL);
@@ -199,18 +199,30 @@ int main(int argc, char* argv[]){
 		exec_program_by_type(argv[6], run.group.program_path);
 	}else{			//father process
 
-		//wait4 for rusage to get running information
-		if(-1 != wait4(sub_pid, &run.process.status, 0, &run.process.rusage)){
-			run.result = ans_cmp();
+		pid_t minitor_pid = fork();
+
+		if(0 == minitor_pid){
+
+			sleep(run.group.limit_time_s + 1);
+			kill(sub_pid, SIGKILL);
+
 		}else{
-			run.result = SE;
+
+
+			//wait4 for rusage to get running information
+			if(-1 != wait4(sub_pid, &run.process.status, 0, &run.process.rusage)){
+				run.result = ans_cmp();
+			}else{
+				run.result = SE;
+			}
+			//close file to avoid something wrong.
+			close(fd_in);
+			close(fd_out);
+			close(fd_err);
+			
+			//compare answer and output to get result and output result
+			write_result(run.result, run.process.time_us, run.process.memory_kb);
+
 		}
-		//close file to avoid something wrong.
-		close(fd_in);
-		close(fd_out);
-		close(fd_err);
-		
-		//compare answer and output to get result and output result
-		write_result(run.result, run.process.time_us, run.process.memory_kb);
 	}
 }
