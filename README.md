@@ -66,9 +66,9 @@
 ```
 ./evaluate limit_time limit_memory len_of_ans data_path program_path type
 eg1.
-./evaluate 1 256 2 /home/jeffxie/Documents/test/helloworld/ /home/jeffxie/Documents/test/test_program cpp
+./evaluate 1000 256 2 /home/jeffxie/Documents/test/helloworld/ /home/jeffxie/Documents/test/test_program cpp
 eg2.
-./evaluate 1 256 2 /home/jeffxie/Documents/test/helloworld/ /home/jeffxie/Documents/test/test_program.py python
+./evaluate 1000 256 2 /home/jeffxie/Documents/test/helloworld/ /home/jeffxie/Documents/test/test_program.py python
 ```
 
 五种type：
@@ -113,7 +113,7 @@ socket服务器使用该评测机安全性建议：
 >
 > socket服务器程序设置权限为711，并和程序分离
 >
-> socket服务器和评测机的执行用户为nobody。
+> 降低socket服务器和评测机的执行用户权限。
 >
 > 加密出两个文件夹名，将in/ans的数据文件和程序分别放在其中，防止程序对数据文件的改动。
 >

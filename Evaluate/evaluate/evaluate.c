@@ -37,7 +37,7 @@ typedef struct Evaluate{
 
 Evaluate evaluate;
 
-void evaluate_init(Evaluate* evaluate, int limit_time_s, 
+void evaluate_init(Evaluate* evaluate, int limit_time_ms, 
 	int limit_memory_mb, int len_ans, char* data_path, 
 	char* program_path){
 
@@ -52,7 +52,7 @@ void evaluate_init(Evaluate* evaluate, int limit_time_s,
 
 	filepath_back(filepath_get_absolute_path(evaluate->project_path));
 
-	submission_init(&evaluate->submission, limit_time_s, 
+	submission_init(&evaluate->submission, limit_time_ms, 
 		limit_memory_mb, len_ans, data_path, program_path, 
 		filepath_get_program_name(program_path, temp_str));
 

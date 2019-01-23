@@ -2,10 +2,10 @@
 
 
 //group init
-void group_init(Group* group, int ans_id, int limit_time_s, 
+void group_init(Group* group, int ans_id, int limit_time_ms, 
 	int limit_memory_mb, char* data_path, char* program_path){
 	group->ans_id = ans_id;
-	group->limit_time_s = limit_time_s;
+	group->limit_time_ms = limit_time_ms;
 	group->limit_memory_mb = limit_memory_mb;
 	strcpy(group->data_path, data_path);
 	strcpy(group->program_path, program_path);

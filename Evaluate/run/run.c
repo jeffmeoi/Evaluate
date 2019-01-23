@@ -8,6 +8,7 @@
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <time.h>
+#include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
@@ -30,7 +31,7 @@ typedef struct Run{
 	char ps_cmd[1001];
 	char data_path[1001], program_path[1001];
 	struct timeval tv_begin, tv_end;		//get system time
-	//clock_t begin, end;
+	pid_t sub_pid;
 
 } Run;
 
@@ -38,6 +39,12 @@ typedef struct Run{
 
 
 Run run;
+
+void handle_signal(int signal){
+	if(signal == SIGALRM){
+		kill(run.sub_pid, SIGKILL);
+	}
+}
 
 
 int ans_cmp(){
@@ -71,7 +78,7 @@ int ans_cmp(){
 
  	if(run.process.time_us <= 0 || run.process.memory_kb <= 0){
  		return SE;
- 	}else if(run.process.time_us > run.group.limit_time_s*1000000){
+ 	}else if(run.process.time_us > run.group.limit_time_ms*1000){
 		return TLE;
 	}else if(run.process.memory_kb > run.group.limit_memory_mb * 1024){
 		return MLE;
@@ -91,14 +98,14 @@ int ans_cmp(){
 
 
 /*init run*/
-void run_init(Run* run, int ans_id, int limit_time_s, int limit_memory_mb, 
+void run_init(Run* run, int ans_id, int limit_time_ms, int limit_memory_mb, 
 	char* data_path, char* program_path){
 
 	char temp_str[1001];
 	run->output_maxlen = 1000000;
 	str_cpy(run->data_path, data_path);
 	str_cpy(run->program_path, program_path);
-	group_init(&run->group, ans_id, limit_time_s, limit_memory_mb, 
+	group_init(&run->group, ans_id, limit_time_ms, limit_memory_mb, 
 		data_path, program_path);
 	sprintf(run->run_out, "%srun.out", 
 		filepath_get_absolute_path(temp_str));
@@ -125,17 +132,30 @@ int exec_program_by_type(char* type, char* program_path){
 }
 
 void limit(){
-	
+
+	//set timer
+	struct itimerval timer;
+	gettimeofday (&timer.it_value, NULL);
+	timer.it_interval.tv_usec = timer.it_interval.tv_sec = 0;
+	timer.it_value.tv_sec = run.group.limit_time_ms / 1000;
+	timer.it_value.tv_usec = run.group.limit_time_ms % 1000 * 1000 + 100;
+	setitimer (ITIMER_REAL, &timer, NULL);
+
+	//limit time	
 	struct rlimit r;
-	r.rlim_cur = run.group.limit_time_s;
-	r.rlim_max = run.group.limit_time_s + 1;
+	r.rlim_cur = (run.group.limit_time_ms%1000 > 0) ? 
+		(run.group.limit_time_ms%1000 + 1) : (run.group.limit_time_ms%1000);
+	r.rlim_max = r.rlim_cur + 1;
 	setrlimit(RLIMIT_CPU, &r);
 
+	//limit memory
 	r.rlim_cur = run.group.limit_memory_mb * 1024 * 1024;
 	r.rlim_max = (run.group.limit_memory_mb + 4) * 1024 * 1024;
 	setrlimit(RLIMIT_AS, &r);
 	setrlimit(RLIMIT_RSS, &r);
+	setrlimit(RLIMIT_DATA, &r);
 
+	//limit subprocess
 	r.rlim_cur = 0, r.rlim_max = 0;
 	setrlimit(RLIMIT_NPROC, &r);
 
@@ -168,6 +188,8 @@ int main(int argc, char* argv[]){
 		fclose(fp);
 	}
 
+	signal(SIGALRM, handle_signal);
+
 	group_get_input_filepath(&run.group, temp_str);
 	int fd_in = open(temp_str, O_RDONLY | O_CREAT, 0777);	//fd of input file
 
@@ -180,9 +202,9 @@ int main(int argc, char* argv[]){
 	gettimeofday(&run.tv_begin, NULL);		//begin time
 
 	//clock is similar with CPU time, gettimeofday get system time
-	pid_t sub_pid = fork();		//new a subprocess to run test program
+	run.sub_pid = fork();		//new a subprocess to run test program
 
-	if(0 == sub_pid){			//subprocess
+	if(0 == run.sub_pid){			//subprocess
 		
 		//close original input and output file
 		close(STDIN_FILENO);
@@ -195,34 +217,26 @@ int main(int argc, char* argv[]){
 
 		limit();
 
+
 		//start test program
 		exec_program_by_type(argv[6], run.group.program_path);
 	}else{			//father process
 
-		pid_t minitor_pid = fork();
 
-		if(0 == minitor_pid){
-
-			sleep(run.group.limit_time_s + 1);
-			kill(sub_pid, SIGKILL);
-
+		//wait4 for rusage to get running information
+		if(-1 != wait4(run.sub_pid, &run.process.status, 0, &run.process.rusage)){
+			run.result = ans_cmp();
 		}else{
-
-
-			//wait4 for rusage to get running information
-			if(-1 != wait4(sub_pid, &run.process.status, 0, &run.process.rusage)){
-				run.result = ans_cmp();
-			}else{
-				run.result = SE;
-			}
-			//close file to avoid something wrong.
-			close(fd_in);
-			close(fd_out);
-			close(fd_err);
-			
-			//compare answer and output to get result and output result
-			write_result(run.result, run.process.time_us, run.process.memory_kb);
-
+			run.result = SE;
 		}
+		//close file to avoid something wrong.
+		close(fd_in);
+		close(fd_out);
+		close(fd_err);
+		
+		//compare answer and output to get result and output result
+		write_result(run.result, run.process.time_us, run.process.memory_kb);
+
+	
 	}
 }
