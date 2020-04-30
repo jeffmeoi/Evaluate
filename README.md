@@ -57,7 +57,7 @@
 
 支持语言：
 
-> 当前支持c/cpp(可执行程序均可)/python/python3/java，
+> 当前支持c/cpp/python/python3/java，
 >
 > 需要预装gcc, java, python2, python3（安装python3后建立链接到/usr/bin/python3）
 
